@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login - Bot Dashboard</title>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .login-container {
+      background: white;
+      padding: 2rem;
+      border-radius: 1rem;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+      text-align: center;
+      max-width: 400px;
+      width: 90%;
+    }
+    h1 {
+      color: #333;
+      margin-bottom: 1rem;
+    }
+    p {
+      color: #666;
+      margin-bottom: 2rem;
+    }
+    .login-btn {
+      background: #5865F2;
+      color: white;
+      border: none;
+      padding: 1rem 2rem;
+      border-radius: 0.5rem;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: background 0.3s;
+      text-decoration: none;
+      display: inline-block;
+    }
+    .login-btn:hover {
+      background: #4752C4;
+    }
+  </style>
+</head>
+<body>
+  <div class="login-container">
+    <i data-lucide="bot" style="width: 64px; height: 64px; color: #5865F2; margin-bottom: 1rem;"></i>
+    <h1>Bot Dashboard</h1>
+    <p>Login with Discord to access your server management panel</p>
+    <a href="/auth/login" class="login-btn" style="display: flex; align-items: center; justify-content: center; gap: 0.5rem;">
+      <i data-lucide="log-in" style="width: 20px; height: 20px;"></i>
+      Login with Discord
+    </a>
+  </div>
+  <script>lucide.createIcons();</script>
+</body>
+</html>
