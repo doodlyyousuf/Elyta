@@ -36,3 +36,6 @@ yarn-error.log*
 tmp/
 temp/
 *.tmp
+COMMANDS_README.md
+*.md
+*.md
