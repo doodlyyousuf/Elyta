@@ -1,3 +1,4 @@
+
 import { SlashCommandBuilder, EmbedBuilder } from "discord.js";
 import { getInviteCount, getInviteLeaderboard } from "../../systems/invites/inviteRewards.js";
 import { showInviteLeaderboard } from "../../systems/invites/leaderboard.js";

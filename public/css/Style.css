@@ -1,0 +1,324 @@
+/* ==========================================================================
+   cus_dis_bot dashboard — core stylesheet
+   Liquid Glass design system
+   Sections: Variables · Reset · Typography · Layout · Background · Navigation
+             · Utility · Responsive breakpoints
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   1. Variables
+   -------------------------------------------------------------------------- */
+:root {
+  /* Surfaces */
+  --void:            #05060a;
+  --bg-base:         #0a0c12;
+  --bg-elevated:     #10131b;
+
+  --glass-1:         rgba(255, 255, 255, 0.045);
+  --glass-2:         rgba(255, 255, 255, 0.075);
+  --glass-3:         rgba(255, 255, 255, 0.115);
+  --glass-border:    rgba(255, 255, 255, 0.09);
+  --glass-border-strong: rgba(255, 255, 255, 0.18);
+
+  /* Text */
+  --text-hi:         #eef1f8;
+  --text-mid:        #b7bdcc;
+  --text-low:        #7d8496;
+  --text-on-accent:  #ffffff;
+
+  /* Brand / accent */
+  --accent-a:        #5865f2;
+  --accent-b:        #9b6bf0;
+  --accent-c:        #eb459e;
+  --accent-gradient: linear-gradient(135deg, var(--accent-a) 0%, var(--accent-b) 55%, var(--accent-c) 100%);
+  --accent-gradient-soft: linear-gradient(135deg, rgba(88,101,242,0.22), rgba(235,69,158,0.16));
+
+  /* Status */
+  --success:         #37d99b;
+  --success-bg:      rgba(55, 217, 155, 0.12);
+  --danger:          #ff5c72;
+  --danger-bg:       rgba(255, 92, 114, 0.12);
+  --warn:            #ffc857;
+  --warn-bg:         rgba(255, 200, 87, 0.12);
+
+  /* Elevation */
+  --shadow-sm:  0 2px 8px rgba(0,0,0,0.25);
+  --shadow-md:  0 8px 30px rgba(0,0,0,0.35);
+  --shadow-lg:  0 20px 60px rgba(0,0,0,0.45);
+  --shadow-glow: 0 0 0 1px rgba(255,255,255,0.06), 0 8px 30px rgba(88,101,242,0.18);
+
+  /* Geometry */
+  --radius-sm:  12px;
+  --radius-md:  18px;
+  --radius-lg:  24px;
+  --radius-pill: 999px;
+
+  /* Blur */
+  --blur-panel: 22px;
+  --blur-nav:   26px;
+
+  /* Type */
+  --font-display: "Space Grotesk", "Manrope", ui-sans-serif, system-ui, sans-serif;
+  --font-body:    "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono:    "JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+
+  /* Motion */
+  --ease-out:   cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --dur-fast:   150ms;
+  --dur-med:    260ms;
+  --dur-slow:   420ms;
+
+  /* Layout */
+  --content-max: 1180px;
+  --nav-h: 68px;
+}
+
+/* --------------------------------------------------------------------------
+   2. Reset
+   -------------------------------------------------------------------------- */
+*, *::before, *::after { box-sizing: border-box; }
+* { margin: 0; padding: 0; }
+html { color-scheme: dark; scroll-behavior: smooth; }
+img { max-width: 100%; display: block; }
+button { font: inherit; }
+ul { list-style: none; }
+
+::selection { background: rgba(88,101,242,0.35); color: #fff; }
+
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.14); border-radius: 99px; border: 2px solid transparent; background-clip: padding-box; }
+::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.24); background-clip: padding-box; }
+
+:focus-visible {
+  outline: 2px solid var(--accent-b);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+/* --------------------------------------------------------------------------
+   3. Typography
+   -------------------------------------------------------------------------- */
+body {
+  font-family: var(--font-body);
+  font-size: 15px;
+  line-height: 1.55;
+  color: var(--text-hi);
+  background: var(--bg-base);
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+h1, h2, h3, .font-display { font-family: var(--font-display); letter-spacing: -0.01em; }
+
+a { color: inherit; text-decoration: none; }
+
+code, .mono { font-family: var(--font-mono); }
+
+.page-title {
+  font-family: var(--font-display);
+  font-size: 26px;
+  font-weight: 600;
+  letter-spacing: -0.015em;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 6px;
+}
+.page-title .icon-badge { width: 38px; height: 38px; }
+.page-sub {
+  color: var(--text-mid);
+  font-size: 14px;
+  margin-bottom: 28px;
+  max-width: 640px;
+}
+
+/* --------------------------------------------------------------------------
+   4. Background — ambient aurora
+   -------------------------------------------------------------------------- */
+.aurora {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  background: var(--void);
+}
+.aurora::before,
+.aurora::after,
+.aurora .blob {
+  content: "";
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(90px);
+  opacity: 0.55;
+  will-change: transform;
+}
+.aurora .blob-1 {
+  width: 620px; height: 620px; top: -180px; left: -120px;
+  background: radial-gradient(circle at 30% 30%, #5865f2, transparent 70%);
+  animation: drift-1 26s ease-in-out infinite;
+}
+.aurora .blob-2 {
+  width: 560px; height: 560px; top: 10%; right: -160px;
+  background: radial-gradient(circle at 60% 40%, #eb459e, transparent 70%);
+  animation: drift-2 32s ease-in-out infinite;
+}
+.aurora .blob-3 {
+  width: 500px; height: 500px; bottom: -200px; left: 20%;
+  background: radial-gradient(circle at 50% 50%, #9b6bf0, transparent 70%);
+  animation: drift-3 30s ease-in-out infinite;
+}
+.aurora .grain {
+  position: absolute; inset: 0;
+  background-image: radial-gradient(rgba(255,255,255,0.035) 1px, transparent 1px);
+  background-size: 3px 3px;
+  opacity: 0.5;
+}
+.aurora .vignette {
+  position: absolute; inset: 0;
+  background: radial-gradient(circle at 50% 20%, transparent 0%, rgba(5,6,10,0.35) 65%, rgba(5,6,10,0.85) 100%);
+}
+
+/* --------------------------------------------------------------------------
+   5. Layout
+   -------------------------------------------------------------------------- */
+main {
+  max-width: var(--content-max);
+  margin: 0 auto;
+  padding: 36px 28px 96px;
+  animation: page-in var(--dur-slow) var(--ease-out);
+}
+
+.spacer { flex: 1; }
+
+footer {
+  text-align: center;
+  color: var(--text-low);
+  font-size: 12px;
+  padding: 28px 20px 40px;
+}
+
+/* --------------------------------------------------------------------------
+   6. Navigation
+   -------------------------------------------------------------------------- */
+header.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  height: var(--nav-h);
+  padding: 0 24px;
+  background: rgba(15, 17, 24, 0.62);
+  backdrop-filter: blur(var(--blur-nav)) saturate(150%);
+  -webkit-backdrop-filter: blur(var(--blur-nav)) saturate(150%);
+  border-bottom: 1px solid var(--glass-border);
+}
+
+.brand { display: flex; align-items: center; gap: 10px; font-weight: 600; font-size: 15px; white-space: nowrap; }
+.brand .logo {
+  width: 34px; height: 34px; border-radius: 10px;
+  background: var(--accent-gradient);
+  display: grid; place-items: center;
+  color: #fff;
+  box-shadow: var(--shadow-glow);
+}
+.brand .logo svg { width: 18px; height: 18px; }
+.brand-name { font-family: var(--font-display); }
+
+nav.guide-tabs {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  background: var(--glass-1);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-pill);
+  padding: 4px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+nav.guide-tabs::-webkit-scrollbar { display: none; }
+
+nav.guide-tabs a {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: var(--radius-pill);
+  color: var(--text-mid);
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+  transition: color var(--dur-fast) var(--ease-out), background var(--dur-fast) var(--ease-out);
+}
+nav.guide-tabs a svg { width: 15px; height: 15px; opacity: 0.85; }
+nav.guide-tabs a:hover { color: var(--text-hi); background: var(--glass-2); }
+nav.guide-tabs a.active {
+  background: var(--accent-gradient);
+  color: #fff;
+  box-shadow: var(--shadow-glow);
+}
+nav.guide-tabs a.active svg { opacity: 1; }
+
+.user-chip {
+  display: flex; align-items: center; gap: 8px; font-size: 13px;
+  padding: 5px 10px 5px 5px;
+  border-radius: var(--radius-pill);
+  background: var(--glass-1);
+  border: 1px solid var(--glass-border);
+}
+.user-chip img { width: 26px; height: 26px; border-radius: 50%; background: var(--bg-elevated); }
+.user-chip span { font-weight: 500; max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.nav-mobile-toggle {
+  display: none;
+  width: 38px; height: 38px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--glass-border);
+  background: var(--glass-1);
+  color: var(--text-hi);
+  align-items: center; justify-content: center;
+  cursor: pointer;
+}
+
+/* --------------------------------------------------------------------------
+   7. Utility
+   -------------------------------------------------------------------------- */
+.hidden { display: none !important; }
+.text-muted { color: var(--text-mid); }
+.text-danger { color: var(--danger); }
+.center { display: flex; align-items: center; justify-content: center; }
+.icon { width: 16px; height: 16px; display: inline-block; flex-shrink: 0; }
+.icon-badge {
+  width: 34px; height: 34px;
+  border-radius: var(--radius-sm);
+  display: grid; place-items: center;
+  background: var(--accent-gradient-soft);
+  color: var(--accent-b);
+  flex-shrink: 0;
+}
+.icon-badge svg { width: 18px; height: 18px; }
+
+/* --------------------------------------------------------------------------
+   8. Responsive breakpoints
+   -------------------------------------------------------------------------- */
+@media (max-width: 900px) {
+  header.topbar { padding: 0 16px; gap: 12px; }
+  .brand-name { display: none; }
+  .user-chip span { display: none; }
+  nav.guide-tabs a span.label { display: none; }
+  nav.guide-tabs a { padding: 10px; }
+  main { padding: 24px 16px 80px; }
+}
+
+@media (max-width: 640px) {
+  .page-title { font-size: 21px; }
+  header.topbar { flex-wrap: nowrap; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.001ms !important; animation-iteration-count: 1 !important; transition-duration: 0.001ms !important; scroll-behavior: auto !important; }
+}

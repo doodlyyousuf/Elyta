@@ -1,10 +1,6 @@
-import { createClient } from "@supabase/supabase-js";
-import { Guild, TextChannel, EmbedBuilder, AuditLogEvent } from "discord.js";
 
-const supabase = createClient(
-  process.env.SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_KEY!
-);
+import { Guild, TextChannel, EmbedBuilder, AuditLogEvent } from "discord.js";
+import { supabase } from "../../database/supabase.js";
 
 export interface LoggingConfig {
   guild_id: string;
@@ -23,56 +19,85 @@ export interface LoggingConfig {
   emoji_sticker: boolean;
 }
 
+// ── M-03: in-memory per-guild config cache with TTL ─────────────────────────
+// Previously `getLoggingConfig` issued a Supabase query on EVERY loggable
+// event, which is wasteful and adds latency. We now cache per guild for
+// `LOGGING_CONFIG_TTL_MS`; `setLoggingConfig` busts the cache via
+// `invalidateLoggingConfig` so changes are visible immediately.
+
+const LOGGING_CONFIG_TTL_MS = 60_000;
+
+interface CachedEntry {
+  config: LoggingConfig;
+  fetchedAt: number;
+}
+
+const configCache = new Map<string, CachedEntry>();
+
+function defaultConfig(guildId: string): LoggingConfig {
+  return {
+    guild_id: guildId,
+    enabled: false,
+    log_channel_id: "",
+    message_delete: true,
+    message_edit: false,
+    member_join: true,
+    member_leave: true,
+    voice_state: false,
+    role_update: true,
+    channel_create: true,
+    channel_delete: true,
+    ban_kick: true,
+    server_update: false,
+    emoji_sticker: false,
+  };
+}
+
+/**
+ * Bust the cached `LoggingConfig` for a guild. Call this after writing config
+ * (done automatically inside `setLoggingConfig`) or whenever an external
+ * process mutates the row.
+ */
+export function invalidateLoggingConfig(guildId: string): void {
+  configCache.delete(guildId);
+}
+
 export async function getLoggingConfig(guildId: string): Promise<LoggingConfig> {
+  const cached = configCache.get(guildId);
+  if (cached && Date.now() - cached.fetchedAt < LOGGING_CONFIG_TTL_MS) {
+    return cached.config;
+  }
+
   const { data, error } = await supabase
     .from("logging_config")
     .select("*")
     .eq("guild_id", guildId)
-    .single();
+    .maybeSingle();
 
-  if (error || !data) {
-    return {
-      guild_id: guildId,
-      enabled: false,
-      log_channel_id: "",
-      message_delete: true,
-      message_edit: false,
-      member_join: true,
-      member_leave: true,
-      voice_state: false,
-      role_update: true,
-      channel_create: true,
-      channel_delete: true,
-      ban_kick: true,
-      server_update: false,
-      emoji_sticker: false,
-    };
-  }
-
-  return data;
+  const config = error || !data ? defaultConfig(guildId) : (data as LoggingConfig);
+  configCache.set(guildId, { config, fetchedAt: Date.now() });
+  return config;
 }
 
 export async function setLoggingConfig(config: LoggingConfig): Promise<void> {
-  const { error } = await supabase
-    .from("logging_config")
-    .upsert(config);
-
+  const { error } = await supabase.from("logging_config").upsert(config);
   if (error) throw error;
+  // Bust the cache so the next `getLoggingConfig` reflects the new values.
+  invalidateLoggingConfig(config.guild_id);
 }
 
 export async function sendLog(
   guild: Guild,
   title: string,
   description: string,
-  color: number = 0x5865F2,
+  color: number = 0x5865f2,
   fields?: { name: string; value: string; inline?: boolean }[]
 ): Promise<void> {
   const config = await getLoggingConfig(guild.id);
-
   if (!config.enabled || !config.log_channel_id) return;
 
-  const channel = guild.channels.cache.get(config.log_channel_id) as TextChannel;
-  if (!channel) return;
+  const channel = guild.channels.cache.get(config.log_channel_id) as TextChannel | undefined;
+  if (!channel || !channel.isTextBased()) return;
 
   const embed = new EmbedBuilder()
     .setColor(color)
@@ -80,14 +105,14 @@ export async function sendLog(
     .setDescription(description)
     .setTimestamp();
 
-  if (fields) {
+  if (fields && fields.length > 0) {
     embed.addFields(fields);
   }
 
   try {
     await channel.send({ embeds: [embed] });
   } catch (error) {
-    console.error("Failed to send log:", error);
+    console.error("[comprehensiveLogger] Failed to send log:", error);
   }
 }
 
@@ -99,25 +124,24 @@ export async function logAuditLogEvent(
   changes: string[]
 ): Promise<void> {
   const config = await getLoggingConfig(guild.id);
-
   if (!config.enabled || !config.log_channel_id) return;
 
-  const channel = guild.channels.cache.get(config.log_channel_id) as TextChannel;
-  if (!channel) return;
+  const channel = guild.channels.cache.get(config.log_channel_id) as TextChannel | undefined;
+  if (!channel || !channel.isTextBased()) return;
 
   const executor = await guild.members.fetch(executorId).catch(() => null);
   const executorName = executor ? executor.user.tag : "Unknown";
 
   const embed = new EmbedBuilder()
-    .setColor(0xFFA500)
+    .setColor(0xffa500)
     .setTitle(`📋 Audit Log: ${eventType}`)
     .setDescription(`**Executor:** ${executorName}\n**Target ID:** ${targetId}`)
-    .addFields(changes.map(change => ({ name: "Change", value: change, inline: false })))
+    .addFields(changes.map((change) => ({ name: "Change", value: change, inline: false })))
     .setTimestamp();
 
   try {
     await channel.send({ embeds: [embed] });
   } catch (error) {
-    console.error("Failed to send audit log:", error);
+    console.error("[comprehensiveLogger] Failed to send audit log:", error);
   }
 }

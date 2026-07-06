@@ -1,3 +1,4 @@
+
 import { EmbedBuilder } from "discord.js";
 import { supabase } from "../../database/supabase.js";
 

@@ -1,9 +1,5 @@
-import { createClient } from "@supabase/supabase-js";
 
-const supabase = createClient(
-  process.env.SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_KEY!
-);
+import { supabase } from "../../database/supabase.js";
 
 export interface UserEconomy {
   user_id: string;
@@ -55,109 +51,129 @@ export async function getUserEconomy(userId: string, guildId: string): Promise<U
   return data;
 }
 
+/**
+ * Atomically increment a user's balance (and total_earned).
+ *
+ * Fixes C-05: previously this did a read→compute→upsert race that allowed
+ * double-crediting under concurrent calls. It now delegates to the
+ * `increment_balance` Postgres RPC (single statement, atomic).
+ *
+ * Returns the full refreshed UserEconomy row.
+ */
 export async function addBalance(userId: string, guildId: string, amount: number): Promise<UserEconomy> {
-  const current = await getUserEconomy(userId, guildId);
-  const newBalance = current.balance + amount;
-  const newTotalEarned = current.total_earned + amount;
-
-  const { data, error } = await supabase
-    .from("user_economy")
-    .upsert({
-      user_id: userId,
-      guild_id: guildId,
-      balance: newBalance,
-      bank: current.bank,
-      total_earned: newTotalEarned,
-      daily_streak: current.daily_streak,
-      last_daily: current.last_daily,
-    })
-    .select()
-    .single();
+  const { error } = await supabase.rpc("increment_balance", {
+    p_user_id: userId,
+    p_guild_id: guildId,
+    p_amount: amount,
+  });
 
   if (error) throw error;
-  return data;
+
+  return await getUserEconomy(userId, guildId);
 }
 
+/**
+ * Atomically debit a user's balance, refusing the operation if the user has
+ * insufficient funds.
+ *
+ * Fixes C-05: previously this did a read→check→upsert race that allowed
+ * double-spending under concurrency. It now delegates to the `debit_balance`
+ * Postgres RPC, which only updates the row when `balance >= amount` and
+ * returns NULL otherwise — we translate NULL into "Insufficient balance".
+ *
+ * Returns the full refreshed UserEconomy row.
+ */
 export async function removeBalance(userId: string, guildId: string, amount: number): Promise<UserEconomy> {
-  const current = await getUserEconomy(userId, guildId);
-  if (current.balance < amount) {
+  const { data, error } = await supabase.rpc("debit_balance", {
+    p_user_id: userId,
+    p_guild_id: guildId,
+    p_amount: amount,
+  });
+
+  if (error) throw error;
+  if (data === null || data === undefined) {
     throw new Error("Insufficient balance");
   }
 
-  const newBalance = current.balance - amount;
-
-  const { data, error } = await supabase
-    .from("user_economy")
-    .upsert({
-      user_id: userId,
-      guild_id: guildId,
-      balance: newBalance,
-      bank: current.bank,
-      total_earned: current.total_earned,
-      daily_streak: current.daily_streak,
-      last_daily: current.last_daily,
-    })
-    .select()
-    .single();
-
-  if (error) throw error;
-  return data;
+  return await getUserEconomy(userId, guildId);
 }
 
+/**
+ * Atomically transfer balance from one user to another in a single DB
+ * transaction.
+ *
+ * Fixes C-05: previously this called removeBalance then addBalance as two
+ * separate RPCs — a crash between them would lose money. The `transfer_balance`
+ * RPC debits then credits inside one transaction and returns FALSE if the
+ * sender had insufficient funds.
+ */
 export async function transferBalance(
   fromUserId: string,
   toUserId: string,
   guildId: string,
   amount: number
 ): Promise<void> {
-  await removeBalance(fromUserId, guildId, amount);
-  await addBalance(toUserId, guildId, amount);
+  const { data, error } = await supabase.rpc("transfer_balance", {
+    p_from_id: fromUserId,
+    p_to_id: toUserId,
+    p_guild_id: guildId,
+    p_amount: amount,
+  });
+
+  if (error) throw error;
+  if (data !== true) {
+    throw new Error("Insufficient balance");
+  }
 }
 
-export async function claimDaily(userId: string, guildId: string): Promise<{ amount: number; streak: number; isNewDay: boolean }> {
+/**
+ * Claim the daily reward. Computes amount & streak in TS, then performs a
+ * single atomic `claim_daily` RPC that updates balance, total_earned,
+ * daily_streak and last_daily in one statement.
+ *
+ * Fixes M-09: previously the function performed a redundant second upsert
+ * using the stale pre-`addBalance` balance (overwriting the just-credited
+ * amount). The single RPC removes that race entirely.
+ * Fixes C-05: the underlying credit is now atomic.
+ */
+export async function claimDaily(
+  userId: string,
+  guildId: string
+): Promise<{ amount: number; streak: number; isNewDay: boolean }> {
   const current = await getUserEconomy(userId, guildId);
   const now = new Date();
   const today = now.toDateString();
   const lastDaily = current.last_daily ? new Date(current.last_daily).toDateString() : "";
 
-  let streak = current.daily_streak;
-  let isNewDay = false;
-
-  if (lastDaily !== today) {
-    isNewDay = true;
-    const yesterday = new Date(now);
-    yesterday.setDate(yesterday.getDate() - 1);
-    
-    if (lastDaily === yesterday.toDateString()) {
-      streak += 1;
-    } else {
-      streak = 1;
-    }
-
-    const baseAmount = 100;
-    const streakBonus = Math.min(streak * 10, 100);
-    const amount = baseAmount + streakBonus;
-
-    await addBalance(userId, guildId, amount);
-
-    const { error } = await supabase
-      .from("user_economy")
-      .upsert({
-        user_id: userId,
-        guild_id: guildId,
-        balance: current.balance + amount,
-        bank: current.bank,
-        total_earned: current.total_earned + amount,
-        daily_streak: streak,
-        last_daily: now.toISOString(),
-      });
-
-    if (error) throw error;
-
-    return { amount, streak, isNewDay };
+  if (lastDaily === today) {
+    return { amount: 0, streak: current.daily_streak, isNewDay: false };
   }
 
-  return { amount: 0, streak, isNewDay: false };
+  // Streak rollover logic (kept in TS; only the write is atomic).
+  let streak = current.daily_streak;
+  const yesterday = new Date(now);
+  yesterday.setDate(yesterday.getDate() - 1);
+
+  if (lastDaily === yesterday.toDateString()) {
+    streak += 1;
+  } else {
+    streak = 1;
+  }
+
+  const baseAmount = 100;
+  const streakBonus = Math.min(streak * 10, 100);
+  const amount = baseAmount + streakBonus;
+
+  const { error } = await supabase.rpc("claim_daily", {
+    p_user_id: userId,
+    p_guild_id: guildId,
+    p_amount: amount,
+    p_streak: streak,
+  });
+
+  if (error) throw error;
+
+  return { amount, streak, isNewDay: true };
 }
 
 export async function getShopItems(guildId: string): Promise<ShopItem[]> {
@@ -167,7 +183,7 @@ export async function getShopItems(guildId: string): Promise<ShopItem[]> {
     .eq("guild_id", guildId);
 
   if (error) throw error;
-  return data || [];
+  return (data as ShopItem[]) || [];
 }
 
 export async function addShopItem(
@@ -201,35 +217,44 @@ export async function removeShopItem(itemId: string): Promise<void> {
   if (error) throw error;
 }
 
+/**
+ * Purchase a shop item: debits the price atomically, then — for non-role
+ * items — atomically increments the inventory quantity via the
+ * `increment_inventory` RPC.
+ *
+ * Fixes H-08: previously this used `upsert({ quantity: 1 })` which reset the
+ * quantity to 1 when buying a second of the same item, and the upsert lacked
+ * an explicit `onConflict` target. The RPC uses
+ * `ON CONFLICT (user_id, guild_id, item_id) DO UPDATE SET quantity = quantity + 1`.
+ */
 export async function purchaseItem(
   userId: string,
   guildId: string,
   itemId: string
 ): Promise<ShopItem> {
-  const item = await supabase
+  const { data: item, error: itemError } = await supabase
     .from("shop_items")
     .select("*")
     .eq("id", itemId)
     .single();
 
-  if (!item.data) throw new Error("Item not found");
+  if (itemError || !item) throw new Error("Item not found");
 
-  await removeBalance(userId, guildId, item.data.price);
+  // Atomic debit — throws "Insufficient balance" if the user can't afford it.
+  await removeBalance(userId, guildId, item.price);
 
-  if (item.data.item_type === "role" && item.data.role_id) {
-    // Role assignment would be handled by the command
+  if (item.item_type === "role" && item.role_id) {
+    // Role assignment is handled by the calling command (needs guild context).
   } else {
-    await supabase
-      .from("user_inventory")
-      .upsert({
-        user_id: userId,
-        guild_id: guildId,
-        item_id: itemId,
-        quantity: 1,
-      });
+    const { error: invError } = await supabase.rpc("increment_inventory", {
+      p_user_id: userId,
+      p_guild_id: guildId,
+      p_item_id: itemId,
+    });
+    if (invError) throw invError;
   }
 
-  return item.data;
+  return item as ShopItem;
 }
 
 export async function getUserInventory(userId: string, guildId: string): Promise<UserInventory[]> {
@@ -240,7 +265,7 @@ export async function getUserInventory(userId: string, guildId: string): Promise
     .eq("guild_id", guildId);
 
   if (error) throw error;
-  return data || [];
+  return (data as UserInventory[]) || [];
 }
 
 export async function getEconomyLeaderboard(guildId: string, limit: number = 10): Promise<UserEconomy[]> {
@@ -252,5 +277,5 @@ export async function getEconomyLeaderboard(guildId: string, limit: number = 10)
     .limit(limit);
 
   if (error) throw error;
-  return data || [];
+  return (data as UserEconomy[]) || [];
 }

@@ -1,10 +1,9 @@
+
 import { EmbedBuilder, MessageFlags } from "discord.js";
 import { supabase } from "../../database/supabase.js";
 import { sendTicketLog } from "./logs.js";
 
 export async function deleteTicket(interaction: any) {
-  await interaction.deferReply({ flags: [MessageFlags.Ephemeral] });
-
   const channel = interaction.channel;
   const guild = interaction.guild;
 

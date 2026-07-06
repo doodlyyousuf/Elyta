@@ -1,3 +1,4 @@
+
 export async function generateTranscript(channel: any, ticket: any): Promise<string> {
   const messages = await channel.messages.fetch({ limit: 100 });
   const sorted = [...messages.values()].sort((a: any, b: any) => a.createdTimestamp - b.createdTimestamp);

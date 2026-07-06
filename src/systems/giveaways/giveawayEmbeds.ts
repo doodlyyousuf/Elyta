@@ -1,3 +1,4 @@
+
 import { EmbedBuilder } from "discord.js";
 
 const ACTIVE_COLOR = 0xffd700;

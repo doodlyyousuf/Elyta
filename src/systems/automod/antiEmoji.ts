@@ -1,3 +1,4 @@
+
 const EMOJI_LIMIT = 8;
 const EMOJI_REGEX = /(?:<a?:[a-zA-Z0-9_]+:\d+>|\p{Extended_Pictographic})/gu;
 

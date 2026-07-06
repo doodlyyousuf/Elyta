@@ -1,3 +1,4 @@
+
 const URL_REGEX = /https?:\/\/[^\s]+/i;
 
 export function containsLink(content: string): boolean {

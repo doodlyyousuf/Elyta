@@ -1,3 +1,4 @@
+
 import { supabase } from "../../database/supabase.js";
 import { checkRoleRewards } from "../roles/tempRoleManager.js";
 

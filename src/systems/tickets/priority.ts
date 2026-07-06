@@ -1,3 +1,4 @@
+
 import { EmbedBuilder, StringSelectMenuBuilder, ActionRowBuilder, StringSelectMenuOptionBuilder } from "discord.js";
 import { supabase } from "../../database/supabase.js";
 import { sendTicketLog } from "./logs.js";

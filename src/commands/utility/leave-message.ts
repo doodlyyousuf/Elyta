@@ -1,3 +1,4 @@
+
 import { SlashCommandBuilder, PermissionFlagsBits, ChannelType } from "discord.js";
 import { supabase } from "../../database/supabase.js";
 

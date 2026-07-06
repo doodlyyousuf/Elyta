@@ -1,3 +1,4 @@
+
 import { EmbedBuilder, ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder } from "discord.js";
 import { supabase } from "../../database/supabase.js";
 

@@ -1,3 +1,4 @@
+
 const SCAM_PATTERNS: RegExp[] = [
   // Free Nitro scams
   /free\s+discord\s*nitro/i,

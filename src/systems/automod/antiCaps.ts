@@ -1,3 +1,4 @@
+
 const MIN_LENGTH = 10;
 const CAPS_RATIO = 0.7;
 

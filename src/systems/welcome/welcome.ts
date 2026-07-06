@@ -1,3 +1,4 @@
+
 import { createClient } from "@supabase/supabase-js";
 import { GuildMember, TextChannel, EmbedBuilder } from "discord.js";
 

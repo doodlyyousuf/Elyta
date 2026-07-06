@@ -1,3 +1,4 @@
+
 const MENTION_LIMIT = 5;
 
 export function isMentionSpam(content: string, mentionCount: number): boolean {

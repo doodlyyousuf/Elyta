@@ -1,10 +1,9 @@
+
 import { EmbedBuilder, PermissionsBitField, MessageFlags } from "discord.js";
 import { supabase } from "../../database/supabase.js";
 import { sendTicketLog } from "./logs.js";
 
 export async function transferTicket(interaction: any, targetUser: any) {
-  await interaction.deferReply({ flags: [MessageFlags.Ephemeral] });
-
   const channel = interaction.channel;
   const { data: ticket } = await supabase
     .from("tickets")

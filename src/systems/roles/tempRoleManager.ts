@@ -1,3 +1,4 @@
+
 import { supabase } from "../../database/supabase.js";
 
 export async function checkExpiredTempRoles(client: any) {

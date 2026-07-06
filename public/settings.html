@@ -1,370 +1,47 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Settings - Bot Management</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>cus_dis_bot · Settings</title>
+  <link rel="icon" href="https://z-cdn.chatglm.cn/z-ai/static/logo.svg" />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
-  <style>
-    :root {
-      --primary: #5865F2;
-      --primary-hover: #4752C4;
-      --bg-main: #f8f9fc;
-      --bg-sidebar: #1e1f22;
-      --bg-card: #ffffff;
-      --text-dark: #2d3748;
-      --text-muted: #718096;
-      --border-color: #e2e8f0;
-      --success: #10b981;
-      --danger: #ef4444;
-      --warning: #f59e0b;
-    }
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body {
-      font-family: 'Inter', sans-serif;
-      background: var(--bg-main);
-      color: var(--text-dark);
-      display: flex;
-      min-height: 100vh;
-    }
-
-    /* Sidebar */
-    .sidebar {
-      width: 260px;
-      background: var(--bg-sidebar);
-      color: #fff;
-      padding: 1.5rem 1rem;
-      display: flex;
-      flex-direction: column;
-      flex-shrink: 0;
-      position: sticky;
-      top: 0;
-      height: 100vh;
-      z-index: 10;
-    }
-    .sidebar-header {
-      display: flex;
-      align-items: center;
-      gap: 0.75rem;
-      padding: 0 0.5rem 1.5rem;
-      border-bottom: 1px solid rgba(255,255,255,0.1);
-      margin-bottom: 1.5rem;
-    }
-    .sidebar-header h2 { font-size: 1.25rem; font-weight: 700; }
-    .nav-item {
-      display: flex;
-      align-items: center;
-      gap: 0.75rem;
-      padding: 0.75rem 1rem;
-      border-radius: 0.5rem;
-      color: #b8b9bd;
-      text-decoration: none;
-      font-weight: 500;
-      transition: all 0.2s ease;
-      margin-bottom: 0.25rem;
-    }
-    .nav-item:hover { background: rgba(255,255,255,0.1); color: #fff; }
-    .nav-item.active { background: var(--primary); color: #fff; }
-
-    /* Main */
-    .main-content { flex: 1; display: flex; flex-direction: column; min-width: 0; }
-
-    /* Topbar */
-    .topbar {
-      background: var(--bg-card);
-      padding: 1rem 2rem;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 1rem;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-      border-bottom: 1px solid var(--border-color);
-      flex-wrap: wrap;
-    }
-    .topbar-left { display: flex; align-items: center; gap: 1rem; min-width: 0; }
-    .topbar-left h1 { font-size: 1.5rem; font-weight: 700; white-space: nowrap; }
-    .guild-select {
-      padding: 0.5rem 2rem 0.5rem 0.75rem;
-      border: 1px solid var(--border-color);
-      border-radius: 0.5rem;
-      font-family: inherit;
-      font-size: 0.9rem;
-      font-weight: 500;
-      color: var(--text-dark);
-      background: var(--bg-main) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23718096' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") no-repeat right 0.6rem center;
-      appearance: none;
-      cursor: pointer;
-      max-width: 260px;
-      transition: border-color 0.2s;
-    }
-    .guild-select:focus { outline: none; border-color: var(--primary); }
-
-    .user-info { display: flex; align-items: center; gap: 0.75rem; }
-    .user-avatar {
-      width: 36px; height: 36px; border-radius: 50%;
-      background: var(--primary);
-      display: flex; align-items: center; justify-content: center;
-      color: white; font-weight: 600; font-size: 0.9rem; flex-shrink: 0;
-      overflow: hidden;
-    }
-    .user-avatar img { width: 100%; height: 100%; object-fit: cover; }
-    .user-name { font-weight: 500; font-size: 0.9rem; white-space: nowrap; }
-    .logout-btn {
-      background: var(--bg-main);
-      color: var(--text-dark);
-      border: 1px solid var(--border-color);
-      padding: 0.4rem 0.85rem;
-      border-radius: 0.375rem;
-      cursor: pointer;
-      text-decoration: none;
-      display: flex; align-items: center; gap: 0.4rem;
-      font-weight: 500; font-size: 0.85rem;
-      transition: all 0.2s;
-    }
-    .logout-btn:hover { background: var(--danger); color: white; border-color: var(--danger); }
-    .add-bot-btn {
-      background: var(--primary);
-      color: white;
-      border: none;
-      padding: 0.5rem 1rem;
-      border-radius: 0.375rem;
-      cursor: pointer;
-      text-decoration: none;
-      display: flex; align-items: center; gap: 0.5rem;
-      font-weight: 600; font-size: 0.9rem;
-      transition: all 0.2s;
-    }
-    .add-bot-btn:hover { background: var(--primary-hover); transform: translateY(-1px); }
-
-    /* Dashboard */
-    .dashboard-content { padding: 2rem; }
-
-    /* Section */
-    .section {
-      background: var(--bg-card);
-      padding: 1.5rem;
-      border-radius: 0.75rem;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.04);
-      border: 1px solid var(--border-color);
-    }
-    .section-header {
-      display: flex; justify-content: space-between; align-items: center;
-      margin-bottom: 1.25rem;
-    }
-    .section-header h2 { font-size: 1.15rem; font-weight: 700; }
-
-    /* Table */
-    .table-wrapper { overflow-x: auto; }
-    .table { width: 100%; border-collapse: collapse; }
-    .table th {
-      text-align: left; padding: 0.7rem 1rem;
-      background: var(--bg-main); color: var(--text-muted);
-      font-size: 0.72rem; text-transform: uppercase;
-      letter-spacing: 0.05em; font-weight: 600;
-    }
-    .table td {
-      padding: 0.85rem 1rem;
-      border-bottom: 1px solid var(--border-color);
-      font-size: 0.9rem;
-    }
-    .table tbody tr:last-child td { border-bottom: none; }
-    .table tbody tr:hover { background: var(--bg-main); }
-
-    .empty-state {
-      text-align: center; padding: 2.5rem 1rem; color: var(--text-muted);
-    }
-  </style>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/styles.css" />
+  <link rel="stylesheet" href="css/components.css" />
+  <link rel="stylesheet" href="css/animations.css" />
 </head>
-<body>
-
-  <!-- Sidebar -->
-  <aside class="sidebar">
-    <div class="sidebar-header">
-      <i data-lucide="bot" style="width:30px;height:30px;color:#5865F2;"></i>
-      <h2>Bot Panel</h2>
-    </div>
-    <nav>
-      <a href="/" class="nav-item">
-        <i data-lucide="layout-dashboard" style="width:20px;height:20px;"></i>
-        <span>Dashboard</span>
-      </a>
-      <a href="/tickets" class="nav-item">
-        <i data-lucide="ticket" style="width:20px;height:20px;"></i>
-        <span>Tickets</span>
-      </a>
-      <a href="/members" class="nav-item">
-        <i data-lucide="users" style="width:20px;height:20px;"></i>
-        <span>Members</span>
-      </a>
-      <a href="/giveaways" class="nav-item">
-        <i data-lucide="gift" style="width:20px;height:20px;"></i>
-        <span>Giveaways</span>
-      </a>
-      <a href="/warnings" class="nav-item">
-        <i data-lucide="shield-alert" style="width:20px;height:20px;"></i>
-        <span>Warnings</span>
-      </a>
-      <a href="/blacklist" class="nav-item">
-        <i data-lucide="ban" style="width:20px;height:20px;"></i>
-        <span>Blacklist</span>
-      </a>
-      <a href="/settings" class="nav-item active">
-        <i data-lucide="settings" style="width:20px;height:20px;"></i>
-        <span>Settings</span>
-      </a>
-    </nav>
-  </aside>
-
-  <!-- Main -->
-  <div class="main-content">
-
-    <!-- Topbar -->
-    <header class="topbar">
-      <div class="topbar-left">
-        <h1>Settings</h1>
-        <select id="guildSelect" class="guild-select" disabled>
-          <option>Loading servers...</option>
-        </select>
-      </div>
-      <div class="user-info">
-        <a href="https://discord.com/oauth2/authorize?client_id=1511468904818540584&permissions=8&scope=bot%20applications.commands" target="_blank" class="add-bot-btn">
-          <i data-lucide="plus" style="width:16px;height:16px;"></i>
-          Add Bot
-        </a>
-        <div class="user-avatar" id="userAvatar">?</div>
-        <span class="user-name" id="username">...</span>
-        <a href="/auth/logout" class="logout-btn">
-          <i data-lucide="log-out" style="width:15px;height:15px;"></i>
-          Logout
-        </a>
-      </div>
-    </header>
-
-    <!-- Content -->
-    <main class="dashboard-content">
-      <div class="section">
-        <div class="section-header">
-          <h2>Server Settings</h2>
-        </div>
-        <div class="table-wrapper">
-          <table class="table">
-            <thead>
-              <tr>
-                <th>Setting</th>
-                <th>Value</th>
-              </tr>
-            </thead>
-            <tbody id="settingsBody">
-              <tr><td colspan="2" class="empty-state">Loading...</td></tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </main>
+<body data-page="settings">
+  <div class="aurora" aria-hidden="true">
+    <div class="blob blob-1"></div>
+    <div class="blob blob-2"></div>
+    <div class="blob blob-3"></div>
+    <div class="grain"></div>
+    <div class="vignette"></div>
   </div>
 
-  <script>
-    lucide.createIcons();
+  <header class="topbar">
+    <div class="brand">
+      <div class="logo"><i data-lucide="bot"></i></div>
+      <span class="brand-name">cus_dis_bot</span>
+    </div>
+    <nav class="guide-tabs" id="nav" aria-label="Primary"></nav>
+    <div class="spacer"></div>
+    <div class="user-chip hidden" id="user-chip">
+      <img id="user-avatar" alt="" />
+      <span id="user-name"></span>
+    </div>
+    <a class="btn btn-sm" href="/auth/logout"><i data-lucide="log-out"></i>Logout</a>
+  </header>
 
-    let guilds = [];
-    let selectedGuildId = localStorage.getItem("selectedGuild");
+  <main id="main">
+    <div class="loading"><div class="spinner"></div><span>Loading…</span></div>
+  </main>
 
-    const $ = (id) => document.getElementById(id);
-    const guildSelect = $("guildSelect");
-    const settingsBody = $("settingsBody");
+  <footer>cus_dis_bot dashboard · corrected codebase · powered by Z.ai Code</footer>
 
-    async function init() {
-      try {
-        const user = await api("/api/user");
-        renderUser(user);
-
-        guilds = await api("/api/guilds");
-        renderGuildSelector();
-
-        if (guilds.length === 0) {
-          guildSelect.innerHTML = '<option>No servers found</option>';
-          settingsBody.innerHTML = '<tr><td colspan="2" class="empty-state">Your bot is not in any servers where you have admin.</td></tr>';
-          return;
-        }
-
-        if (!selectedGuildId || !guilds.find(g => g.id === selectedGuildId)) {
-          selectedGuildId = guilds[0].id;
-        }
-        guildSelect.value = selectedGuildId;
-        localStorage.setItem("selectedGuild", selectedGuildId);
-
-        await loadSettings();
-      } catch (err) {
-        console.error(err);
-        guildSelect.innerHTML = '<option>Error loading</option>';
-      }
-    }
-
-    function renderUser(user) {
-      $("username").textContent = user.username;
-      const avatar = $("userAvatar");
-      if (user.avatar) {
-        avatar.innerHTML = `<img src="https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png" alt="">`;
-      } else {
-        avatar.textContent = user.username.charAt(0).toUpperCase();
-      }
-    }
-
-    function renderGuildSelector() {
-      guildSelect.innerHTML = guilds.map(g =>
-        `<option value="${g.id}">${escHtml(g.name)} (${g.memberCount.toLocaleString()})</option>`
-      ).join("");
-      guildSelect.disabled = false;
-    }
-
-    guildSelect.addEventListener("change", () => {
-      selectedGuildId = guildSelect.value;
-      localStorage.setItem("selectedGuild", selectedGuildId);
-      loadSettings();
-    });
-
-    async function loadSettings() {
-      settingsBody.innerHTML = '<tr><td colspan="2" class="empty-state">Loading...</td></tr>';
-      try {
-        const data = await api(`/api/guild/${selectedGuildId}/table/guild_settings`);
-        renderSettings(data.data);
-      } catch (err) {
-        console.error(err);
-        settingsBody.innerHTML = '<tr><td colspan="2" class="empty-state" style="color:var(--danger);">Failed to load</td></tr>';
-      }
-    }
-
-    function renderSettings(settings) {
-      if (!settings || settings.length === 0) {
-        settingsBody.innerHTML = '<tr><td colspan="2" class="empty-state">No settings configured</td></tr>';
-        return;
-      }
-
-      settingsBody.innerHTML = settings.map(s => {
-        return `<tr>
-          <td style="font-weight:600;">${escHtml(s.key || '—')}</td>
-          <td style="font-family:monospace;color:var(--text-muted);">${escHtml(String(s.value || '—'))}</td>
-        </tr>`;
-      }).join("");
-    }
-
-    async function api(url) {
-      const r = await fetch(url);
-      if (r.status === 401) { window.location.href = "/auth/login"; throw new Error("Unauthorized"); }
-      if (!r.ok) throw new Error(`HTTP ${r.status}`);
-      return r.json();
-    }
-
-    function escHtml(str) {
-      const d = document.createElement("div");
-      d.textContent = str || "";
-      return d.innerHTML;
-    }
-
-    init();
-  </script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="js/app.js"></script>
 </body>
-</html>
+</html> 

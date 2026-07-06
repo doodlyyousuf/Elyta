@@ -1,3 +1,4 @@
+
 import { EmbedBuilder, MessageFlags } from "discord.js";
 import { supabase } from "../../database/supabase.js";
 import { sendTicketLog } from "./logs.js";
@@ -53,8 +54,8 @@ export async function submitTicketRating(interaction: any, ticketId: number, rat
 }
 
 export async function getTicketStats(interaction: any) {
-  await interaction.deferReply({ flags: [MessageFlags.Ephemeral] });
-
+  // NOTE: interactionCreate already deferred the reply for chat-input commands.
+  // Do NOT call deferReply here — that throws InteractionAlreadyReplied.
   const guild = interaction.guild;
 
   const { data: ratings } = await supabase
@@ -86,4 +87,3 @@ export async function getTicketStats(interaction: any) {
 
   await interaction.editReply({ embeds: [embed] });
 }
-
